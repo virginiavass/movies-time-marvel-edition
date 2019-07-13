@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Marvelsmovie.it</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1,minimal-ui" name="viewport">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat&display=swap"> 
+    <link rel="stylesheet" href="https://unpkg.com/vue-material@beta/dist/vue-material.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/vue-material@beta/dist/theme/default.css">
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/vue-material@beta"></script>
+    <script src="https://unpkg.com/vue-router"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.4/firebase-app.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/6.2.4/firebase-firestore.js"></script> 
+	<style> 
+		#app {
+			height: 100vh;
+      background-color: grey;
+		}
+    h3 {
+      font-family: 'Roboto thin', sans-serif;
+      font-style: italic;
+      font-size: 14pt;
+      color: black;
+    }
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 25pt;
+      color: lightgrey;
+    }
+    .marvel {
+      position: relative;
+      left: 200px;
+    }
+	</style>
+  </head>
+
+  <body>
+    <md-app id="app">
+        <md-app-toolbar class="md-transparent md-large">
+        <md-button class="md-icon-button" @click="menuVisible = true" v-if="!menuVisible">
+          <md-icon>menu</md-icon>
+        </md-button><span><h2> MOVIES TIME.it</h2></span>
+        <img class="marvel" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Marvel_Studios_2016_logo.svg/1280px-Marvel_Studios_2016_logo.svg.png" alt="logo marvel studios" title="film marvel studios" width="200"/>
+      </md-app-toolbar>
+
+      <md-app-drawer md-persistent="full" :md-active.sync="menuVisible"> 
+
+        <md-toolbar class="md-transparent" md-elevation="0">
+          <span>Men&#250;</span>
+          <div class="md-toolbar-section-end">
+            <md-button class="md-icon-button" @click="menuVisible = false">
+              <md-icon>keyboard_arrow_left</md-icon>
+            </md-button>
+          </div>
+        </md-toolbar>
+
+        <md-list>
+          <md-list-item to="/home">
+            <md-icon>home</md-icon>
+            <div class="md-list-item-text">Home</div>
+          </md-list-item>
+          <md-list-item to="/page1">
+            <md-icon>local_movies</md-icon>
+            <div class="md-list-item-text">Tutti i film</div>
+          </md-list-item>
+           <md-list-item to="/page2"> 
+            <md-icon>star_border</md-icon>
+            <div class="md-list-item-text">Film preferiti</div>
+          </md-list-item>
+          <md-list-item to="/page3">
+            <md-icon>mode_comment</md-icon>
+             <div class="md-list-item-text">Reviews</div> 
+          </md-list-item>
+        </md-list>
+      </md-app-drawer>
+      <md-app-content>
+        <router-view></router-view>
+      </md-app-content>
+    </md-app> 
+
+      <script> 
+        Vue.use(VueMaterial.default)
+        Vue.component('router-link', Vue.options.components.RouterLink) 
+        Vue.component('router-view', Vue.options.components.RouterView)
+
+        var users = []
+        var favourites = []
+
+        const Home = Vue.component('home', {template: '#home'});
+        const Page1 = Vue.component('page1', { 
+          template: '#page1',
+          data: function() {
+            return {
+              users: users,
+              message: "",
+              selected: 0 
+            };
+          }
+        });
+        const Page2 = Vue.component('page2', {
+          template: '#page2',
+          data: function() {
+            return {
+              users: favourites,
+              message: "",
+              selected: 0
+            };
+          }
+        });
+         const Page3 = Vue.component('page3', {
+          template: '#page3',
+          data: function() {
+            return {
+              users: users,
+              message: "",
+              selected: 0
+            };
+          }
+        });
+
+        const Detail = Vue.component('detail', { 
+          template: '#detail',
+          computed: {
+            user: function() { 
+              const id = this.$route.params.id;
+              return users.filter(function(u) {
+                return u.id == id;
+              })[0];
+            }
+          }
+        });
+
+
+        const router = new VueRouter({
+          routes: [
+            {path:'/home', component: Home},
+            {path: '/page1', component: Page1},
+            {path: '/page2', component: Page2},
+            {path: '/page3', component: Page3},
+            {path:'/detail/:id', component: Detail},
+            {path:'*', component: Home},
+          ]
+        })
+
+        new Vue({   
+          router: router,
+          el: '#app',
+          data: {
+            menuVisible: false
+          }
+        })
+    </script>
+
+    <template id="home">
+      <md-empty-state
+      md-rounded
+      md-icon="star_border"
+      md-label="Non hai ancora nessun film preferito"
+      md-description="Crea la tua lista dei preferiti">
+      <md-button class="md-primary md-raised" to="/page1"> Tutti i film</md-button>
+      </md-empty-state>
+    </template>
+
+    <template id="page1">
+       <div class="md-layout md-gutter">
+          <div v-for="user in users" class="md-layout-item md-size-33 md-medium-size-50 md-xsmall-size-100">
+            <md-card :to="'/detail/' + user.id" md-with-hover> 
+              <md-card-header>
+                <div class="md-title">{{user.name}}</div>
+                <div class="md-subhead">{{user.description}}</div>
+              </md-card-header>
+              <md-card-media>
+                <img :src="user.avatar">
+                 <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+          <div>
+            <md-button class="md-raised md-primary" v-on:click="user.onAddMe" onclick="window-alert('Il film è stato aggiunto alla lista dei preferiti')">ADD ME</md-button>
+            <md-button class="md-raised" to="/page3"> All Reviews </md-button>
+          </div>
+
+          <md-card-expand-trigger>
+            <md-button class="md-icon-button">
+              <md-icon>keyboard_arrow_down</md-icon>
+            </md-button>
+          </md-card-expand-trigger>
+        </md-card-actions>
+        <md-card-expand-content>
+          <md-card-content>
+          <p>{{user.trama}}</p> 
+          </md-card-content>
+        </md-card-expand-content>
+      </md-card-expand>
+              </md-card-media>
+            </md-card>
+            <br>
+          </div>
+        </div>
+    </template>
+    <template id="detail">
+      <div>
+        <h1>{{user.name}}</h1>
+        <img :src="user.avatar"><br>
+        <span>{{user.description}}</span>
+      </div>
+    </template>
+
+    <template id="page2">
+      <div class="md-layout md-gutter">
+          <div v-for="user in users" class="md-layout-item md-size-33 md-medium-size-50 md-xsmall-size-100">
+            <md-card :to="'/detail/' + user.id" :id="user.id" md-with-hover>
+              <md-card-header>
+                <div class="md-title">{{user.name}}</div>
+                <div class="md-subhead">{{user.description}}</div>
+              </md-card-header>
+              <md-card-media>
+                <img :src="user.avatar">
+                 <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+          <div>
+            <md-button class="md-raised md-primary" v-on:click="user.onRemoveMe" :id="user.id" onclick="window-alert('Il film è stato rimosso con successo')">REMOVE ME</md-button>
+            <md-button class="md-raised" to="/page3"> All Reviews </md-button>
+          </div>
+
+          <md-card-expand-trigger>
+            <md-button class="md-icon-button">
+              <md-icon>keyboard_arrow_down</md-icon>
+            </md-button>
+          </md-card-expand-trigger>
+        </md-card-actions>
+        <md-card-expand-content>
+          <md-card-content>
+           <p>{{user.trama}}</p> 
+          </md-card-content>
+        </md-card-expand-content>
+      </md-card-expand>
+              </md-card-media>
+            </md-card>
+            <br>
+          </div>
+        </div>
+    </template>
+
+    <template id="page3">
+      <div class="md-layout md-gutter">
+          <div v-for="user in users" class="md-layout-item md-size-33 md-medium-size-50 md-xsmall-size-100">
+            <md-card :to="'/detail/' + user.id" md-with-hover>
+              <md-card-header>
+                <div class="md-title">{{user.name}}</div>
+                <div class="md-subhead">{{user.description}}</div>
+              </md-card-header>
+              <md-card-media> 
+                <img :src="user.avatar">
+                 <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+          <div>
+            <md-button class="md-raised md-primary" v-on:click="user.onAddMe" onclick="window-alert('Il film è stato aggiunto alla lista dei preferiti')">ADD ME</md-button>
+            <md-button class="md-raised" onclick="myFunction()">COMMENTA</md-button>
+          </div>
+
+          <md-card-expand-trigger>
+            <md-button class="md-icon-button">
+              <md-icon>keyboard_arrow_down</md-icon>
+            </md-button>
+          </md-card-expand-trigger>
+        </md-card-actions>
+        <md-card-expand-content>
+          <md-card-content>
+            <h3>Reviews</h3>
+            <p id="visualizza"></p>
+               <script>
+              function myFunction() {
+                var txt;
+                var movie = prompt ("Lascia un commento", "");
+                if (movie == null || movie == "") {
+                    txt = "no comments";
+                  } else {
+                    txt = "Your comment: " + movie ;
+                  }
+                  return document.getElementById("visualizza").innerHTML = txt;
+              }
+             </script> 
+             <h4>Rate</h4>
+             <select v-model="selected">
+                  <option disabled value="">Valuta il film</option>
+                  <option>0</option>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                  <option>4</option>
+                  <option>5</option>
+                </select>
+                <input type="button" value="INVIA" onclick="window-alert('Il tuo voto è stato inviato correttamente')">
+          </md-card-content>
+        </md-card-expand-content>
+      </md-card-expand>
+              </md-card-media>
+            </md-card>
+            <br>
+          </div>
+        </div>
+    </template>
+    <template id="detail">
+      <div>
+        <h1>{{user.name}}</h1>
+        <img :src="user.avatar"><br>
+        <span>{{user.description}}</span>
+      </div>
+          
+    </template>
+<script src="index.js"></script>
+  </body>
+</html>
